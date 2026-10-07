@@ -1,0 +1,142 @@
+erDiagram
+    USERS ||--o{ STAFF_MEMBERS : "works as"
+    USERS ||--o{ SALON_CLIENTS : "is client card of"
+    USERS ||--o{ FAVORITE_SALONS : saves
+    USERS ||--o{ REFRESH_TOKENS : has
+    USERS ||--o{ PUSH_TOKENS : has
+    USERS ||--o{ NOTIFICATIONS : receives
+    USERS ||--o{ SALONS : created
+
+    DISTRICTS |o--o{ SALONS : "located in"
+    SALONS ||--|| SALON_SETTINGS : "booking rules"
+    SALONS ||--o{ SALON_PHOTOS : has
+    SALONS ||--o{ SALON_WORKING_HOURS : "open on"
+    SALONS ||--o{ SALON_CLOSURES : "closed on"
+    SALONS ||--o{ SERVICES : offers
+    SALONS ||--o{ STAFF_MEMBERS : employs
+    SALONS ||--o{ SALON_CLIENTS : "client list"
+    SALONS ||--o{ FAVORITE_SALONS : "saved by"
+    SALONS ||--o{ BOOKINGS : receives
+
+    CATEGORIES ||--o{ SERVICES : groups
+    CATEGORIES ||--o{ SERVICE_TEMPLATES : suggests
+
+    STAFF_MEMBERS ||--o{ STAFF_SERVICES : performs
+    SERVICES ||--o{ STAFF_SERVICES : "performed by"
+    STAFF_MEMBERS ||--o{ STAFF_WORKING_HOURS : "works on"
+    STAFF_MEMBERS ||--o{ STAFF_TIME_OFF : "blocked time"
+    STAFF_MEMBERS ||--o{ BOOKINGS : serves
+
+    SALON_CLIENTS ||--o{ BOOKINGS : books
+    BOOKINGS ||--|{ BOOKING_SERVICES : contains
+    SERVICES ||--o{ BOOKING_SERVICES : "snapshot of"
+    BOOKINGS ||--o{ BOOKING_EVENTS : history
+    BOOKINGS |o--o{ SMS_MESSAGES : triggers
+    BOOKINGS |o--o{ NOTIFICATIONS : about
+
+    USERS {
+        uuid id PK
+        varchar phone UK "E.164"
+        varchar full_name
+        bool is_platform_admin
+    }
+    SALONS {
+        uuid id PK
+        varchar slug UK
+        varchar name
+        int district_id FK
+        varchar address
+        double latitude
+        double longitude
+        varchar status "draft/pending_review/published/suspended"
+        bool is_listed
+    }
+    SALON_SETTINGS {
+        uuid salon_id PK,FK
+        bool auto_confirm
+        int min_lead_minutes
+        int max_advance_days
+        smallint slot_step_minutes
+        bool sms_reminders_enabled
+    }
+    SALON_WORKING_HOURS {
+        uuid salon_id PK,FK
+        smallint weekday PK "0=Sun"
+        time opens_at
+        time closes_at
+    }
+    SERVICES {
+        uuid id PK
+        uuid salon_id FK
+        int category_id FK
+        varchar name
+        int duration_minutes
+        int buffer_minutes
+        numeric price
+        bool is_online
+        bool is_archived
+    }
+    STAFF_MEMBERS {
+        uuid id PK
+        uuid salon_id FK
+        uuid user_id FK "null until invite accepted"
+        varchar display_name
+        varchar role "owner/manager/master"
+        varchar status "invited/active/archived"
+        bool is_bookable
+    }
+    STAFF_SERVICES {
+        uuid staff_id PK,FK
+        uuid service_id PK,FK
+        uuid salon_id FK "same-salon guard"
+    }
+    STAFF_WORKING_HOURS {
+        uuid staff_id PK,FK
+        smallint weekday PK
+        time starts_at
+        time ends_at
+        time break_starts_at
+        time break_ends_at
+    }
+    STAFF_TIME_OFF {
+        uuid id PK
+        uuid staff_id FK
+        timestamptz starts_at
+        timestamptz ends_at
+        varchar reason
+    }
+    SALON_CLIENTS {
+        uuid id PK
+        uuid salon_id FK
+        uuid user_id FK "null = no app account"
+        varchar full_name
+        varchar phone "unique per salon"
+        text note
+    }
+    BOOKINGS {
+        uuid id PK
+        varchar reference_code UK "CH-1042"
+        uuid salon_id FK
+        uuid staff_id FK
+        uuid salon_client_id FK
+        varchar source "app/salon"
+        varchar status "pending/confirmed/completed/no_show/cancelled/declined"
+        timestamptz starts_at
+        timestamptz ends_at
+        timestamptz occupied_until "ends_at + buffer"
+        numeric total_price
+    }
+    BOOKING_SERVICES {
+        uuid booking_id PK,FK
+        smallint position PK
+        uuid service_id FK
+        varchar service_name
+        int duration_minutes
+        numeric price
+    }
+    BOOKING_EVENTS {
+        bigint id PK
+        uuid booking_id FK
+        varchar type
+        jsonb payload
+    }

@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Chaetsere.Domain/Chaetsere.Domain.csproj" />
+    <Project Path="src/Chaetsere.Infrastructure/Chaetsere.Infrastructure.csproj" />
+  </Folder>
+</Solution>
